@@ -8,7 +8,7 @@ Feature: Create, List and Delete Funds
 
     @wip
     Scenario: Bookkeeper lists empty funds
-        When the bookkeeper lists the funds
+        When the bookkeeper has not added any funds
         Then the list of funds has 0 entries.
 
     @ignore
