@@ -14,3 +14,13 @@ type currencyInfo struct {
 	number     int
 	minorUnits int
 }
+
+func (c Currency) Name() (string, error) {
+	switch c {
+	case CAD:
+		return "CAD", nil
+	case USD:
+		return "USD", nil
+	}
+	panic("not implemented")
+}
