@@ -31,6 +31,12 @@ const (
 	{{- end}}
 	{{- end}}
 )
+
+var currencyStringsBlock string = "XXX
+	{{- range $key,$value := .}}
+	{{- if (ne $key "XXX")}}{{$key}}
+	{{- end}}
+	{{- end}}"
 `
 
 type CurrencyName struct {

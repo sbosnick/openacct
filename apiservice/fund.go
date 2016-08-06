@@ -66,24 +66,11 @@ func (f *fundStore) Delete(ctx context.Context, id string) jsh.ErrorType {
 	panic("not implemented")
 }
 
-func getCurrencyName(currency domain.Currency) (string, *jsh.Error) {
-	name, err := currency.Name()
-	if err != nil {
-		return "", jsh.ISE(err.Error())
-	}
-	return name, nil
-}
-
 func createFundObject(fund domain.Fund) (*jsh.Object, *jsh.Error) {
-	currencyName, err := getCurrencyName(fund.Currency())
-	if err != nil {
-		return nil, err
-	}
-
 	id := strconv.FormatUint(uint64(fund.Id()), 10)
 
 	obj, err := jsh.NewObject(id, fundResourceType,
-		fundAttributes{Name: fund.Name(), Currency: currencyName})
+		fundAttributes{Name: fund.Name(), Currency: fund.Currency().String()})
 	if err != nil {
 		return nil, err
 	}
