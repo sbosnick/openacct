@@ -59,7 +59,7 @@ func getBaseURL() string {
 
 func init() {
 	BeforeAll(func() {
-		handler, err := openacctapi.BuildApiHandler()
+		handler, err := openacctapi.BuildApiHandler("placeholder")
 		if err != nil {
 			log.Fatal(err)
 		}
