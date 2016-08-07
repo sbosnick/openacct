@@ -5,4 +5,5 @@
 package domain
 
 type Store interface {
+	FundRepository() FundRepository
 }

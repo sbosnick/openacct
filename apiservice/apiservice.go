@@ -7,10 +7,20 @@
 package apiservice
 
 import (
-	"github.com/sbosnick1/openacct/domain"
 	"net/http"
+
+	"github.com/derekdowling/jsh-api"
+	"github.com/sbosnick1/openacct/domain"
 )
+
+const apiV1Prefix = "/v1"
 
 func New(store domain.Store) (http.Handler, error) {
 	return http.NotFoundHandler(), nil
+}
+
+func newApi(store domain.Store) *jshapi.API {
+	api := jshapi.New(apiV1Prefix)
+	api.Add(newFundResource(store.FundRepository()))
+	return api
 }
