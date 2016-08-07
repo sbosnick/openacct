@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/derekdowling/go-json-spec-handler"
+	"github.com/derekdowling/jsh-api"
 	"github.com/sbosnick1/openacct/domain"
 	"golang.org/x/net/context"
 )
@@ -15,6 +16,10 @@ import (
 const (
 	fundResourceType = "fund"
 )
+
+func newFundResource(repository domain.FundRepository) *jshapi.Resource {
+	return jshapi.NewCRUDResource(fundResourceType, &fundStore{repository})
+}
 
 type fundAttributes struct {
 	Name     string `json:"name,omitempty"`

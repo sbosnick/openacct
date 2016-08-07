@@ -16,7 +16,7 @@ import (
 func getRequestResponse(t *testing.T, urlStr string) (*http.Request, *httptest.ResponseRecorder) {
 	request, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
-		t.Fatal("rootAdaptor unable to create request.")
+		t.Fatal("unable to create request.")
 	}
 
 	response := httptest.NewRecorder()

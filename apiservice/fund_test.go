@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/derekdowling/jsh-api"
 	"github.com/sbosnick1/openacct/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -97,4 +98,18 @@ func TestFundStoreListReturnsFundsFromDomain(t *testing.T) {
 				"Unexpected attributes on a returned object.")
 		}
 	}
+}
+
+func TestNewFundResource(t *testing.T) {
+	assert := assert.New(t)
+	fakerepository := newFakeFundRepository([]fakeFund{{1, domain.CAD, "General"},
+		{2, domain.USD, "Special"}})
+	request, respsonsewriter := getRequestResponse(t, "/fund")
+
+	sut := jshapi.New("/")
+	sut.Add(newFundResource(fakerepository))
+	sut.ServeHTTPC(context.Background(), respsonsewriter, request)
+
+	assert.Equal(http.StatusOK, respsonsewriter.Code, "Unexpected status code.")
+	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
 }
