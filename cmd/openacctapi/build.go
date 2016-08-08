@@ -16,10 +16,7 @@ func BuildApiHandler(dsn string) (http.Handler, error) {
 		return nil, err
 	}
 
-	handler, err := apiservice.New(store)
-	if err != nil {
-		return nil, err
-	}
+	handler := apiservice.New(store)
 
 	return handler, nil
 }

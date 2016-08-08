@@ -15,8 +15,11 @@ import (
 
 const apiV1Prefix = "/v1"
 
-func New(store domain.Store) (http.Handler, error) {
-	return http.NotFoundHandler(), nil
+// New() is a factory for the api service to expose the provided
+// domain.Store. The returned handler will service request for resources
+// on a JSON API at URL's prefixed with "/v1".
+func New(store domain.Store) http.Handler {
+	return &rootAdaptor{newApi(store)}
 }
 
 func newApi(store domain.Store) *jshapi.API {

@@ -35,3 +35,17 @@ func TestNewApiListsAllFunds(t *testing.T) {
 	assert.Equal(http.StatusOK, responsewriter.Code, "Unexpected status code.")
 	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
 }
+
+func TestNewListsAllFunds(t *testing.T) {
+	assert := assert.New(t)
+	request, responsewriter := getRequestResponse(t, "/v1/fund")
+	fakerepository := newFakeFundRepository([]fakeFund{{1, domain.CAD, "General"},
+		{2, domain.USD, "Special"}})
+	fakestore := &fakeStore{fakerepository}
+
+	sut := New(fakestore)
+	sut.ServeHTTP(responsewriter, request)
+
+	assert.Equal(http.StatusOK, responsewriter.Code, "Unexpected status code.")
+	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
+}
