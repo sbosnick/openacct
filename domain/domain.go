@@ -6,8 +6,30 @@ package domain
 
 import (
 	"errors"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+)
+
+const (
+	mysqlDialect string = "mysql"
 )
 
 func New(dsn string) (Store, error) {
 	return nil, errors.New("Not yet implemented")
+}
+
+func CreateOrMigrate(dsn string) error {
+	db, err := gorm.Open(mysqlDialect, dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	err = db.AutoMigrate(&fund{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
