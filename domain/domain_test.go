@@ -70,17 +70,30 @@ func deleteAllTables(t *testing.T, dsn string) {
 	}
 }
 
-func getEmptyDb(t *testing.T) *gorm.DB {
-	dsn := makeDsn()
-
+func createEmptyDb(t *testing.T, dsn string) {
 	deleteAllTables(t, dsn)
 	err := CreateOrMigrate(dsn)
 	require.NoError(t, err, "Unable to create the database schema.")
+}
 
+func openDb(t *testing.T, dsn string) *gorm.DB {
 	db, err := gorm.Open("mysql", dsn)
 	require.NoError(t, err, "Unable to open the database.")
 
 	return db
+}
+
+func openAndInsertFunds(t *testing.T, dsn string, funds []fund) {
+	db := openDb(t, dsn)
+	defer db.Close()
+
+	insertFunds(t, db, funds)
+}
+
+func getEmptyDb(t *testing.T) *gorm.DB {
+	dsn := makeDsn()
+	createEmptyDb(t, dsn)
+	return openDb(t, dsn)
 }
 
 func TestCreateOrMigrate(t *testing.T) {
@@ -96,4 +109,22 @@ func TestCreateOrMigrate(t *testing.T) {
 	require.NoError(err, "gorm.Open() failed.")
 	defer db.Close()
 	assert.True(db.HasTable(&fund{}))
+}
+
+func TestNewFundRepositoryGetAllRetrievesAllFunds(t *testing.T) {
+	dsn := makeDsn()
+	createEmptyDb(t, dsn)
+	expected := []fund{{1, CAD, "General"}, {2, USD, "Special"}}
+	openAndInsertFunds(t, dsn, expected)
+
+	sut, err := New(dsn)
+	require.NoError(t, err, "Unable to create Store.")
+	actual, err := sut.FundRepository().GetAll()
+
+	require.NoError(t, err, "Unable to get all funds.")
+	require.NotNil(t, actual, "GetAll() returned nil funds list.")
+	assert.Equal(t, len(expected), len(actual), "Unexpected number of funds returned from GetAll().")
+	for _, f := range actual {
+		assert.Contains(t, expected, *f.(*fund), "Unexpected fund returned from GetAll().")
+	}
 }
