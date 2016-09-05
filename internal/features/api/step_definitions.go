@@ -30,15 +30,6 @@ func getServer() *httptest.Server {
 	return World[worldServerKey].(*httptest.Server)
 }
 
-func closeServer() {
-	srv := getServer()
-	if srv == nil {
-		log.Panic("httptest Server is nil in World map.")
-	}
-	srv.Close()
-	setServer(nil)
-}
-
 func getRootURL() string {
 	srv := getServer()
 	if srv == nil {
@@ -64,6 +55,24 @@ func getBaseURL() string {
 
 func getDsn() string {
 	return "/openacct"
+}
+
+func openServer() {
+	handler, err := openacctapi.BuildApiHandler(getDsn())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	setServer(httptest.NewServer(handler))
+}
+
+func closeServer() {
+	srv := getServer()
+	if srv == nil {
+		log.Panic("httptest Server is nil in World map.")
+	}
+	srv.Close()
+	setServer(nil)
 }
 
 func cleanDb() {
@@ -104,18 +113,9 @@ func cleanDb() {
 }
 
 func init() {
-	BeforeAll(func() {
-		handler, err := openacctapi.BuildApiHandler(getDsn())
-		if err != nil {
-			log.Fatal(err)
-		}
+	BeforeAll(openServer)
 
-		setServer(httptest.NewServer(handler))
-	})
-
-	AfterAll(func() {
-		closeServer()
-	})
+	AfterAll(closeServer)
 
 	Before("@cleandb", cleanDb)
 
@@ -124,7 +124,7 @@ func init() {
 		// an empty database.
 	})
 
-	Then(`^the list of funds has (\d+) entries.$`, func(count int) {
+	Then(`^the list of funds has (\d+) entr(y|ies).?$`, func(count int, _ string) {
 		doc, resp, err := jsc.List(getBaseURL(), "fund")
 		if err != nil {
 			T.Errorf(err.Error())
@@ -166,19 +166,11 @@ func init() {
 		T.Skip() // pending
 	})
 
-	Then(`^the list of funds has (\d+) entry$`, func(i1 int) {
-		T.Skip() // pending
-	})
-
 	And(`^there is a "(.+?)" fund demonicated in "(.+?)" currency.$`, func(s1 string, s2 string) {
 		T.Skip() // pending
 	})
 
 	Given(`^that the bookkeeper has added the "(.+?)" fund in "(.+?)" currency$`, func(s1 string, s2 string) {
-		T.Skip() // pending
-	})
-
-	Then(`^the list of funds has (\d+) entries$`, func(i1 int) {
 		T.Skip() // pending
 	})
 
