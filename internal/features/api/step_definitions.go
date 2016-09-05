@@ -5,14 +5,19 @@
 package api
 
 import (
-	jsh "github.com/derekdowling/go-json-spec-handler"
-	jsc "github.com/derekdowling/go-json-spec-handler/client"
-	. "github.com/gucumber/gucumber"
-	"github.com/sbosnick1/openacct/cmd/openacctapi"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+
+	jsh "github.com/derekdowling/go-json-spec-handler"
+	jsc "github.com/derekdowling/go-json-spec-handler/client"
+	"github.com/go-sql-driver/mysql"
+	. "github.com/gucumber/gucumber"
+	"github.com/sbosnick1/openacct/cmd/openacctapi"
+	"github.com/sbosnick1/openacct/domain"
 )
 
 var worldServerKey = "server"
@@ -49,7 +54,7 @@ func getBaseURL() string {
 		log.Panic(err)
 	}
 
-	apiurl, err := url.Parse("api/v1/")
+	apiurl, err := url.Parse("v1/")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -57,9 +62,50 @@ func getBaseURL() string {
 	return root.ResolveReference(apiurl).String()
 }
 
+func getDsn() string {
+	return "/openacct"
+}
+
+func cleanDb() {
+	dsn := getDsn()
+
+	config, err := mysql.ParseDSN(dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// This creates a risk of a SQL injection attack, but we
+	// are about to drop the database so there isn't much worse
+	// things that could be done. Plus this is testing code, not
+	// production.
+	drop := fmt.Sprintf("drop database if exists %s", config.DBName)
+	create := fmt.Sprintf("create database %s", config.DBName)
+
+	_, err = db.Exec(drop)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec(create)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = domain.CreateOrMigrate(dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func init() {
 	BeforeAll(func() {
-		handler, err := openacctapi.BuildApiHandler("placeholder")
+		handler, err := openacctapi.BuildApiHandler(getDsn())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -70,6 +116,8 @@ func init() {
 	AfterAll(func() {
 		closeServer()
 	})
+
+	Before("@cleandb", cleanDb)
 
 	When(`^the bookkeeper has not added any funds$`, func() {
 		// Do nothing. This should be the default state when starting from

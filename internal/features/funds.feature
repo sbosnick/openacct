@@ -2,6 +2,7 @@
 # Use of this source code is governed by the GNU General Public License version 3.
 # See the file COPYING for your rights under that license.
 
+@cleandb
 Feature: Create, List and Delete Funds
     Bookkeepers should be able to create new funds, and list and delete existing funds.
 
