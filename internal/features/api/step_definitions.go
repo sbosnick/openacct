@@ -146,7 +146,7 @@ func init() {
 			return
 		}
 
-		if !doc.HasData() {
+		if doc.Data == nil {
 			T.Errorf("The returned jsh document did not have any data.")
 			return
 		}

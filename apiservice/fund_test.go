@@ -113,3 +113,16 @@ func TestNewFundResource(t *testing.T) {
 	assert.Equal(http.StatusOK, respsonsewriter.Code, "Unexpected status code.")
 	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
 }
+
+func TestNewFundResorceWithEmptyReporsitory(t *testing.T) {
+	assert := assert.New(t)
+	var fakerepository fakeFundRepository
+	request, respsonsewriter := getRequestResponse(t, "/fund")
+
+	sut := jshapi.New("/")
+	sut.Add(newFundResource(&fakerepository))
+	sut.ServeHTTPC(context.Background(), respsonsewriter, request)
+
+	assert.Equal(http.StatusOK, respsonsewriter.Code, "Unexpected status code.")
+	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
+}

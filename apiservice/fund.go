@@ -50,7 +50,7 @@ func (f *fundStore) List(ctx context.Context) (jsh.List, jsh.ErrorType) {
 		return nil, jsh.ISE(err.Error())
 	}
 
-	var list jsh.List
+	list := make(jsh.List, 0)
 	for _, f := range fund {
 		obj, err := createFundObject(f)
 		if err != nil {
