@@ -11,12 +11,11 @@ Feature: Create, List and Delete Funds
     relating to accounts in the the same fund are demonicated using the currency
     of that fund.
 
-    @wip
     Scenario: Bookkeeper lists empty funds
         When the bookkeeper has not added any funds
         Then the list of funds has 0 entries.
 
-    @ignore
+    @wip
     Scenario: Bookkeeper adds a fund
         When the bookkeeper adds the "General" fund in "CDN" currency
         Then the list of funds has 1 entry
