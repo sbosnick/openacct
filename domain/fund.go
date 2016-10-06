@@ -35,6 +35,7 @@ func (f *fund) Name() string {
 // The FundRepository is the means of accessing the Fund's in the store.
 type FundRepository interface {
 	GetAll() ([]Fund, error)
+	Create(name string, currency Currency) (Fund, error)
 }
 
 type fundRepository struct {
@@ -55,4 +56,8 @@ func (f *fundRepository) GetAll() ([]Fund, error) {
 	}
 
 	return ret, nil
+}
+
+func (*fundRepository) Create(string, Currency) (Fund, error) {
+	panic("not implemented")
 }

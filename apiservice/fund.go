@@ -38,12 +38,29 @@ func (f *fundStore) Save(ctx context.Context, object *jsh.Object) (*jsh.Object, 
 	}
 
 	var attributes fundAttributes
-	jsherr := object.Unmarshal(fundResourceType, &attributes)
+	jsherrs := object.Unmarshal(fundResourceType, &attributes)
+	if jsherrs != nil {
+		return nil, jsherrs
+	}
+
+	currency, err := domain.ParseCurrency(attributes.Currency)
+	if err != nil {
+		// the validation on fundAttributes should have ensured this
+		// does not happen
+		return nil, jsh.ISE(err.Error())
+	}
+
+	fund, err := f.repository.Create(attributes.Name, currency)
+	if err != nil {
+		return nil, jsh.ISE(err.Error())
+	}
+
+	obj, jsherr := createFundObject(fund)
 	if jsherr != nil {
 		return nil, jsherr
 	}
 
-	panic("not implemented")
+	return obj, nil
 }
 
 func (f *fundStore) Get(ctx context.Context, id string) (*jsh.Object, jsh.ErrorType) {

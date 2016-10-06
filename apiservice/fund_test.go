@@ -40,8 +40,10 @@ func (f *fakeFund) Id() uint {
 }
 
 type fakeFundRepository struct {
-	getAllCalled bool
-	funds        []domain.Fund
+	getAllCalled     bool
+	createFundCalled bool
+	nextID           uint
+	funds            []domain.Fund
 }
 
 func (f *fakeFundRepository) GetAll() ([]domain.Fund, error) {
@@ -49,12 +51,20 @@ func (f *fakeFundRepository) GetAll() ([]domain.Fund, error) {
 	return f.funds, nil
 }
 
+func (f *fakeFundRepository) Create(name string, currency domain.Currency) (domain.Fund, error) {
+	f.createFundCalled = true
+	f.nextID++
+	fund := fakeFund{f.nextID, currency, name}
+	f.funds = append(f.funds, &fund)
+	return &fund, nil
+}
+
 func newFakeFundRepository(funds []fakeFund) *fakeFundRepository {
 	var realfunds []domain.Fund
 	for _, f := range funds {
 		realfunds = append(realfunds, &f)
 	}
-	return &fakeFundRepository{false, realfunds}
+	return &fakeFundRepository{funds: realfunds}
 }
 
 func newFundObject(t *testing.T, id string, attributes map[string]string) *jsh.Object {
@@ -176,6 +186,36 @@ func TestFundStoreSaveWithInvalidCurrencyIsError(t *testing.T) {
 		assert.Equal(t, StatusUnprocessableEntity, jsherr.StatusCode(),
 			"fundStore gave unexpect status on Save()")
 	}
+}
+
+func TestFundStoreSaveCreatesFundInDomain(t *testing.T) {
+	rep := newFakeFundRepository([]fakeFund{})
+	obj := newFundObject(t, "", map[string]string{"currency": "CAD", "name": "General"})
+
+	sut := fundStore{rep}
+	_, jsherr := sut.Save(context.Background(), obj)
+
+	assert.Nil(t, jsherr, "fundStore gave unexpected error on Save()")
+	assert.True(t, rep.createFundCalled, "fundStore did not call CreateFund()")
+	require.Len(t, rep.funds, 1, "unexpected number of funds in the fake repository")
+	assert.Equal(t, "General", rep.funds[0].Name(), "unexpected fund name in the repository")
+	assert.Equal(t, domain.CAD, rep.funds[0].Currency(), "unexpected currency in the repository")
+}
+
+func TestFundStoreSaveReturnsCreatedFund(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	rep := newFakeFundRepository([]fakeFund{})
+	obj := newFundObject(t, "", map[string]string{"currency": "CAD", "name": "General"})
+
+	sut := fundStore{rep}
+	actual, jsherr := sut.Save(context.Background(), obj)
+
+	require.Nil(jsherr, "fundStore gave unexpted error on Save()")
+	require.NotNil(actual, "fundStore returned nil fund on Save()")
+	assert.Equal("1", actual.ID, "returned fund had unexpected ID")
+	assert.JSONEq(`{"currency" : "CAD", "name" : "General"}`, string(actual.Attributes),
+		"Unexpected attributes on the returned fund")
 }
 
 func TestNewFundResource(t *testing.T) {
