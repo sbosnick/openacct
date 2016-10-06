@@ -9,9 +9,14 @@ package apiservice
 import (
 	"net/http"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/derekdowling/jsh-api"
 	"github.com/sbosnick1/openacct/domain"
 )
+
+func init() {
+	govalidator.TagMap["currency"] = domain.IsCurrency
+}
 
 const apiV1Prefix = "/v1"
 

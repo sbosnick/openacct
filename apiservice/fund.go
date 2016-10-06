@@ -7,7 +7,7 @@ package apiservice
 import (
 	"strconv"
 
-	"github.com/derekdowling/go-json-spec-handler"
+	jsh "github.com/derekdowling/go-json-spec-handler"
 	"github.com/derekdowling/jsh-api"
 	"github.com/sbosnick1/openacct/domain"
 	"golang.org/x/net/context"
@@ -22,8 +22,8 @@ func newFundResource(repository domain.FundRepository) *jshapi.Resource {
 }
 
 type fundAttributes struct {
-	Name     string `json:"name,omitempty"`
-	Currency string `json:"currency,omitempty"`
+	Name     string `json:"name,omitempty" valid:"required,utfletternum"`
+	Currency string `json:"currency,omitempty" valid:"required,currency"`
 }
 
 // A fundStore is a store for the fund resorce type. It adapts a
@@ -33,6 +33,16 @@ type fundStore struct {
 }
 
 func (f *fundStore) Save(ctx context.Context, object *jsh.Object) (*jsh.Object, jsh.ErrorType) {
+	if f.repository == nil {
+		return nil, jsh.ISE("fundStore requires a FundRepository")
+	}
+
+	var attributes fundAttributes
+	jsherr := object.Unmarshal(fundResourceType, &attributes)
+	if jsherr != nil {
+		return nil, jsherr
+	}
+
 	panic("not implemented")
 }
 

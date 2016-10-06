@@ -8,12 +8,17 @@ import (
 	"net/http"
 	"testing"
 
+	jsh "github.com/derekdowling/go-json-spec-handler"
 	"github.com/derekdowling/jsh-api"
 	"github.com/sbosnick1/openacct/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"golang.org/x/net/context"
+)
+
+const (
+	StatusUnprocessableEntity int = 422
 )
 
 type fakeFund struct {
@@ -50,6 +55,14 @@ func newFakeFundRepository(funds []fakeFund) *fakeFundRepository {
 		realfunds = append(realfunds, &f)
 	}
 	return &fakeFundRepository{false, realfunds}
+}
+
+func newFundObject(t *testing.T, id string, attributes map[string]string) *jsh.Object {
+	obj, jsherr := jsh.NewObject(id, "fund", attributes)
+	if jsherr != nil {
+		t.Fatal(jsherr)
+	}
+	return obj
 }
 
 func TestZeroFundStoreListsWithISE(t *testing.T) {
@@ -97,6 +110,71 @@ func TestFundStoreListReturnsFundsFromDomain(t *testing.T) {
 				string(obj.Attributes),
 				"Unexpected attributes on a returned object.")
 		}
+	}
+}
+
+func TestZeroFundStoreSavesWithISE(t *testing.T) {
+	obj := newFundObject(t, "", map[string]string{})
+
+	var sut fundStore
+	_, jsherr := sut.Save(context.Background(), obj)
+
+	assert.Equal(t, http.StatusInternalServerError, jsherr.StatusCode(),
+		"zero fundStore gave unexpected status on Save()")
+}
+
+func TestFundStoreSaveWithoutNameIsError(t *testing.T) {
+	rep := newFakeFundRepository([]fakeFund{})
+	obj := newFundObject(t, "", map[string]string{"currency": "CAD"})
+
+	sut := fundStore{rep}
+	_, jsherr := sut.Save(context.Background(), obj)
+
+	assert.Equal(t, StatusUnprocessableEntity, jsherr.StatusCode(),
+		"fundStore gave unexpect status on Save()")
+}
+
+func TestFundStoreSaveWithInvalidNameIsError(t *testing.T) {
+	badnames := []string{"#$%", ""}
+
+	for _, badname := range badnames {
+		rep := newFakeFundRepository([]fakeFund{})
+		obj := newFundObject(t, "", map[string]string{"currency": "CAD", "name": badname})
+
+		sut := fundStore{rep}
+		_, jsherr := sut.Save(context.Background(), obj)
+
+		assert.Equal(t, StatusUnprocessableEntity, jsherr.StatusCode(),
+			"fundStore gave unexpect status on Save()")
+	}
+}
+
+func TestFundStoreSaveWithoutCurrencyIsError(t *testing.T) {
+	rep := newFakeFundRepository([]fakeFund{})
+	obj := newFundObject(t, "", map[string]string{"name": "General"})
+
+	sut := fundStore{rep}
+	_, jsherr := sut.Save(context.Background(), obj)
+
+	assert.Equal(t, StatusUnprocessableEntity, jsherr.StatusCode(),
+		"fundStore gave unexpect status on Save()")
+}
+
+func TestFundStoreSaveWithInvalidCurrencyIsError(t *testing.T) {
+	// if this test starts failing on the "UUU" check if a new
+	// currency with code UUU has been added.
+	badcurrencies := []string{"#$%", "BADDD", "UUU"}
+
+	for _, badcurrency := range badcurrencies {
+		rep := newFakeFundRepository([]fakeFund{})
+		obj := newFundObject(t, "",
+			map[string]string{"currency": badcurrency, "name": "General"})
+
+		sut := fundStore{rep}
+		_, jsherr := sut.Save(context.Background(), obj)
+
+		assert.Equal(t, StatusUnprocessableEntity, jsherr.StatusCode(),
+			"fundStore gave unexpect status on Save()")
 	}
 }
 
