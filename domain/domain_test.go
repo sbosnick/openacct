@@ -83,7 +83,7 @@ func openDb(t *testing.T, dsn string) *gorm.DB {
 	return db
 }
 
-func openAndInsertFunds(t *testing.T, dsn string, funds []fund) {
+func openAndInsertFunds(t *testing.T, dsn string, funds []fundImpl) {
 	db := openDb(t, dsn)
 	defer db.Close()
 
@@ -108,13 +108,13 @@ func TestCreateOrMigrate(t *testing.T) {
 	db, err := gorm.Open("mysql", dsn)
 	require.NoError(err, "gorm.Open() failed.")
 	defer db.Close()
-	assert.True(db.HasTable(&fund{}))
+	assert.True(db.HasTable(&fundImpl{}))
 }
 
 func TestNewFundRepositoryGetAllRetrievesAllFunds(t *testing.T) {
 	dsn := makeDsn()
 	createEmptyDb(t, dsn)
-	expected := []fund{{1, CAD, "General"}, {2, USD, "Special"}}
+	expected := []fundImpl{{1, CAD, "General"}, {2, USD, "Special"}}
 	openAndInsertFunds(t, dsn, expected)
 
 	sut, err := New(dsn)
@@ -125,6 +125,6 @@ func TestNewFundRepositoryGetAllRetrievesAllFunds(t *testing.T) {
 	require.NotNil(t, actual, "GetAll() returned nil funds list.")
 	assert.Equal(t, len(expected), len(actual), "Unexpected number of funds returned from GetAll().")
 	for _, f := range actual {
-		assert.Contains(t, expected, *f.(*fund), "Unexpected fund returned from GetAll().")
+		assert.Contains(t, expected, *f.(*fundImpl), "Unexpected fund returned from GetAll().")
 	}
 }

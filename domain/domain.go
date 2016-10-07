@@ -29,7 +29,7 @@ func CreateOrMigrate(dsn string) error {
 	}
 	defer db.Close()
 
-	err = db.AutoMigrate(&fund{}).Error
+	err = db.AutoMigrate(&fundImpl{}).Error
 	if err != nil {
 		return err
 	}

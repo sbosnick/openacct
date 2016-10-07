@@ -14,21 +14,21 @@ type Fund interface {
 	Name() string
 }
 
-type fund struct {
+type fundImpl struct {
 	ID           uint
 	FundCurrency Currency
 	FundName     string `sql:"size:255;unique;index`
 }
 
-func (f *fund) Id() uint {
+func (f *fundImpl) Id() uint {
 	return f.ID
 }
 
-func (f *fund) Currency() Currency {
+func (f *fundImpl) Currency() Currency {
 	return f.FundCurrency
 }
 
-func (f *fund) Name() string {
+func (f *fundImpl) Name() string {
 	return f.FundName
 }
 
@@ -43,7 +43,7 @@ type fundRepository struct {
 }
 
 func (f *fundRepository) GetAll() ([]Fund, error) {
-	var funds []fund
+	var funds []fundImpl
 
 	err := f.db.Find(&funds).Error
 	if err != nil {
@@ -58,6 +58,13 @@ func (f *fundRepository) GetAll() ([]Fund, error) {
 	return ret, nil
 }
 
-func (*fundRepository) Create(string, Currency) (Fund, error) {
-	panic("not implemented")
+func (f *fundRepository) Create(name string, currency Currency) (Fund, error) {
+	fund := fundImpl{FundName: name, FundCurrency: currency}
+
+	err := f.db.Create(&fund).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &fund, nil
 }
