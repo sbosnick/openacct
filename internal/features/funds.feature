@@ -17,13 +17,13 @@ Feature: Create, List and Delete Funds
 
     @wip
     Scenario: Bookkeeper adds a fund
-        When the bookkeeper adds the "General" fund in "CDN" currency
+        When the bookkeeper adds the "General" fund in "CAD" currency
         Then the list of funds has 1 entry
-        And there is a "General" fund demonicated in "CDN" currency.
+        And there is a "General" fund demonicated in "CAD" currency.
 
     @ignore
     Scenario: Bookkeeper adds a second fund
-        Given that the bookkeeper has added the "General" fund in "CDN" currency
+        Given that the bookkeeper has added the "General" fund in "CAD" currency
         When the bookkeeper adds the "USGeneral" fund in "USD" currency
         Then the list of funds has 2 entries
         And there is a "USGeneral" fund demonicated in "USD" currency.
@@ -32,7 +32,7 @@ Feature: Create, List and Delete Funds
     Scenario: Bookkeeper deletes one of two funds
         Given that the bookkeeper has added the following funds
             | fundname  | currency  |
-            | General   | CDN       |
+            | General   | CAD       |
             | USGeneral | USD       |
         When the bookkeeper deletes the "USGeneral" fund
         Then the list of funds has 1 entry
