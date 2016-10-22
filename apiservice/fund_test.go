@@ -5,7 +5,9 @@
 package apiservice
 
 import (
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	jsh "github.com/derekdowling/go-json-spec-handler"
@@ -73,6 +75,17 @@ func newFundObject(t *testing.T, id string, attributes map[string]string) *jsh.O
 		t.Fatal(jsherr)
 	}
 	return obj
+}
+
+func parseResponseBody(t *testing.T, payload *httptest.ResponseRecorder, mode jsh.DocumentMode) *jsh.Document {
+	parser := jsh.Parser{
+		Method:  "",
+		Headers: payload.Header(),
+	}
+
+	doc, jsherr := parser.Document(ioutil.NopCloser(payload.Body), mode)
+	require.Nil(t, jsherr, "jsh.Parser failed to parse the recorded response")
+	return doc
 }
 
 func TestZeroFundStoreListsWithISE(t *testing.T) {
@@ -230,6 +243,33 @@ func TestNewFundResource(t *testing.T) {
 
 	assert.Equal(http.StatusOK, respsonsewriter.Code, "Unexpected status code.")
 	assert.True(fakerepository.getAllCalled, "Listing the funds failed to call GetAll()")
+}
+
+func TestNewFundResourceIncludesAttributes(t *testing.T) {
+	assert := assert.New(t)
+	fakerepository := newFakeFundRepository([]fakeFund{{1, domain.CAD, "General"},
+		{2, domain.USD, "Special"}})
+	request, respsonsewriter := getRequestResponse(t, "/fund")
+
+	sut := jshapi.New("/")
+	sut.Add(newFundResource(fakerepository))
+	sut.ServeHTTPC(context.Background(), respsonsewriter, request)
+
+	doc := parseResponseBody(t, respsonsewriter, jsh.ListMode)
+	assert.True(doc.HasData(), "Returned document unexpected has no data.")
+	for _, obj := range doc.Data {
+		switch obj.ID {
+		case "1":
+			assert.JSONEq(`{"currency" : "CAD", "name" : "General"}`,
+				string(obj.Attributes),
+				"Unexpected attributes on an object in the returned document.")
+		case "2":
+			assert.JSONEq(`{"currency" : "USD", "name" : "Special"}`,
+				string(obj.Attributes),
+				"Unexpected attributes on an object in the returned document.")
+		}
+
+	}
 }
 
 func TestNewFundResorceWithEmptyReporsitory(t *testing.T) {
