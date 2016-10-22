@@ -176,14 +176,13 @@ func init() {
 			return
 		}
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusCreated {
 			T.Errorf("Unexpected status code in the response: %s", resp.Status)
 			return
 		}
 	})
 
 	And(`^there is a "(.+?)" fund demonicated in "(.+?)" currency.$`, func(fundName string, currency string) {
-		T.Skip() // pending
 		doc, resp, err := jsc.List(getBaseURL(), "fund")
 		if err != nil {
 			T.Errorf(err.Error())
@@ -195,26 +194,33 @@ func init() {
 			return
 		}
 
+		if doc.HasErrors() {
+			T.Errorf("Returned document has errors: %s", doc.Error())
+			return
+		}
+
 		if !doc.HasData() {
 			T.Errorf("Returned document has no data.")
 			return
 		}
 
 		var attributes = make(map[string]string)
-		err = doc.First().Marshal(attributes)
-		if err != nil {
-			T.Errorf(err.Error())
+		jsherr := doc.First().Marshal(&attributes)
+		if jsherr != nil {
+			T.Errorf(jsherr.Error())
 			return
 		}
 
-		if attributes["fundname"] != fundName {
+		if attributes["name"] != fundName {
 			T.Errorf("The returned fund should have had a fund named %s but instead had a fund named %s.",
 				fundName, attributes["fundname"])
+			return
 		}
 
 		if attributes["currency"] != currency {
 			T.Errorf("The returned fund should have had a currency of %s but instead had a currency of %s.",
 				currency, attributes["currency"])
+			return
 		}
 	})
 
