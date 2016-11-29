@@ -205,7 +205,7 @@ func init() {
 		}
 
 		var attributes = make(map[string]string)
-		jsherr := doc.First().Marshal(&attributes)
+		jsherr := doc.First().Unmarshal("fund", &attributes)
 		if jsherr != nil {
 			T.Errorf(jsherr.Error())
 			return
