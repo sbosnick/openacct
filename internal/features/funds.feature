@@ -15,13 +15,12 @@ Feature: Create, List and Delete Funds
         When the bookkeeper has not added any funds
         Then the list of funds has 0 entries.
 
-    @wip
     Scenario: Bookkeeper adds a fund
         When the bookkeeper adds the "General" fund in "CAD" currency
         Then the list of funds has 1 entry
         And there is a "General" fund demonicated in "CAD" currency.
 
-    @ignore
+    @wip
     Scenario: Bookkeeper adds a second fund
         Given that the bookkeeper has added the "General" fund in "CAD" currency
         When the bookkeeper adds the "USGeneral" fund in "USD" currency
