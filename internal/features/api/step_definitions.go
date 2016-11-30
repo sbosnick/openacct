@@ -112,6 +112,49 @@ func cleanDb() {
 	}
 }
 
+// This function is used to represent the default state when starting from
+// an empty database.
+func doNothing() {
+}
+
+func checkFundCount(count int) {
+	doc, resp, err := jsc.List(getBaseURL(), "fund")
+	if err != nil {
+		T.Errorf(err.Error())
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		T.Errorf("Unexpected status code in the response: %s", resp.Status)
+		return
+	}
+
+	if doc == nil {
+		T.Errorf("No jsh document returned.")
+		return
+	}
+
+	if doc.HasErrors() {
+		T.Errorf("The returned jsh document had the following errors %s", doc.Error())
+		return
+	}
+
+	if doc.Data == nil {
+		T.Errorf("The returned jsh document did not have any data.")
+		return
+	}
+
+	if doc.Mode != jsh.ListMode {
+		T.Errorf("The returned jsh document was not in list mode.")
+		return
+	}
+
+	if len(doc.Data) != count {
+		T.Errorf("The returned list had %d entries but %d were expected", len(doc.Data), count)
+		return
+	}
+}
+
 func addFund(fundName string, currency string) {
 	object, jsherr := jsh.NewObject("", "fund",
 		map[string]string{"name": fundName, "currency": currency})
@@ -177,47 +220,10 @@ func init() {
 
 	Before("@cleandb", cleanDb)
 
-	When(`^the bookkeeper has not added any funds$`, func() {
-		// Do nothing. This should be the default state when starting from
-		// an empty database.
-	})
+	When(`^the bookkeeper has not added any funds$`, doNothing)
 
 	Then(`^the list of funds has (\d+) entr(y|ies).?$`, func(count int, _ string) {
-		doc, resp, err := jsc.List(getBaseURL(), "fund")
-		if err != nil {
-			T.Errorf(err.Error())
-			return
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			T.Errorf("Unexpected status code in the response: %s", resp.Status)
-			return
-		}
-
-		if doc == nil {
-			T.Errorf("No jsh document returned.")
-			return
-		}
-
-		if doc.HasErrors() {
-			T.Errorf("The returned jsh document had the following errors %s", doc.Error())
-			return
-		}
-
-		if doc.Data == nil {
-			T.Errorf("The returned jsh document did not have any data.")
-			return
-		}
-
-		if doc.Mode != jsh.ListMode {
-			T.Errorf("The returned jsh document was not in list mode.")
-			return
-		}
-
-		if len(doc.Data) != count {
-			T.Errorf("The returned list had %d entries but %d were expected", len(doc.Data), count)
-			return
-		}
+		checkFundCount(count)
 	})
 
 	When(`^the bookkeeper adds the "(.+?)" fund in "(.+?)" currency$`, addFund)
