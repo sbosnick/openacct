@@ -112,6 +112,64 @@ func cleanDb() {
 	}
 }
 
+func addFund(fundName string, currency string) {
+	object, jsherr := jsh.NewObject("", "fund",
+		map[string]string{"name": fundName, "currency": currency})
+	if jsherr != nil {
+		T.Errorf(jsherr.Error())
+		return
+	}
+
+	_, resp, err := jsc.Post(getBaseURL(), object)
+	if err != nil {
+		T.Errorf(err.Error())
+		return
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		T.Errorf("Unexpected status code in the response: %s", resp.Status)
+		return
+	}
+}
+
+func checkForFund(fundName string, currency string) {
+	doc, resp, err := jsc.List(getBaseURL(), "fund")
+	if err != nil {
+		T.Errorf(err.Error())
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		T.Errorf("Unexpected status code in the response: %s", resp.Status)
+		return
+	}
+
+	if doc.HasErrors() {
+		T.Errorf("Returned document has errors: %s", doc.Error())
+		return
+	}
+
+	if !doc.HasData() {
+		T.Errorf("Returned document has no data.")
+		return
+	}
+
+	for _, object := range doc.Data {
+		var attributes = make(map[string]string)
+		jsherr := object.Unmarshal("fund", &attributes)
+		if jsherr != nil {
+			T.Errorf(jsherr.Error())
+		}
+
+		if attributes["name"] == fundName && attributes["currency"] == currency {
+			return
+		}
+	}
+
+	T.Errorf("The returned list of funds did not include one with a name %s and currency %s.",
+		fundName, currency)
+}
+
 func init() {
 	BeforeAll(openServer)
 
@@ -162,71 +220,11 @@ func init() {
 		}
 	})
 
-	When(`^the bookkeeper adds the "(.+?)" fund in "(.+?)" currency$`, func(fundName string, currency string) {
-		object, jsherr := jsh.NewObject("", "fund",
-			map[string]string{"name": fundName, "currency": currency})
-		if jsherr != nil {
-			T.Errorf(jsherr.Error())
-			return
-		}
+	When(`^the bookkeeper adds the "(.+?)" fund in "(.+?)" currency$`, addFund)
 
-		_, resp, err := jsc.Post(getBaseURL(), object)
-		if err != nil {
-			T.Errorf(err.Error())
-			return
-		}
+	And(`^there is a "(.+?)" fund demonicated in "(.+?)" currency.$`, checkForFund)
 
-		if resp.StatusCode != http.StatusCreated {
-			T.Errorf("Unexpected status code in the response: %s", resp.Status)
-			return
-		}
-	})
-
-	And(`^there is a "(.+?)" fund demonicated in "(.+?)" currency.$`, func(fundName string, currency string) {
-		doc, resp, err := jsc.List(getBaseURL(), "fund")
-		if err != nil {
-			T.Errorf(err.Error())
-			return
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			T.Errorf("Unexpected status code in the response: %s", resp.Status)
-			return
-		}
-
-		if doc.HasErrors() {
-			T.Errorf("Returned document has errors: %s", doc.Error())
-			return
-		}
-
-		if !doc.HasData() {
-			T.Errorf("Returned document has no data.")
-			return
-		}
-
-		var attributes = make(map[string]string)
-		jsherr := doc.First().Unmarshal("fund", &attributes)
-		if jsherr != nil {
-			T.Errorf(jsherr.Error())
-			return
-		}
-
-		if attributes["name"] != fundName {
-			T.Errorf("The returned fund should have had a fund named %s but instead had a fund named %s.",
-				fundName, attributes["fundname"])
-			return
-		}
-
-		if attributes["currency"] != currency {
-			T.Errorf("The returned fund should have had a currency of %s but instead had a currency of %s.",
-				currency, attributes["currency"])
-			return
-		}
-	})
-
-	Given(`^that the bookkeeper has added the "(.+?)" fund in "(.+?)" currency$`, func(s1 string, s2 string) {
-		T.Skip() // pending
-	})
+	Given(`^that the bookkeeper has added the "(.+?)" fund in "(.+?)" currency$`, addFund)
 
 	Given(`^that the bookkeeper has added the following funds$`, func(table [][]string) {
 		T.Skip() // pending
