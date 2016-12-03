@@ -16,6 +16,7 @@ import (
 	jsc "github.com/derekdowling/go-json-spec-handler/client"
 	"github.com/go-sql-driver/mysql"
 	. "github.com/gucumber/gucumber"
+	"github.com/gucumber/gucumber/gherkin"
 	"github.com/sbosnick1/openacct/cmd/openacctapi"
 	"github.com/sbosnick1/openacct/domain"
 )
@@ -175,6 +176,17 @@ func addFund(fundName string, currency string) {
 	}
 }
 
+func addFunds(fundTable gherkin.TabularData) {
+	funds := fundTable.ToMap()
+	for i := 0; i < funds.NumRows(); i++ {
+		addFund(funds["fundname"][i], funds["currency"][i])
+       }
+}
+
+func deleteFund(fundName string) {
+	T.Skip()
+}
+
 func checkForFund(fundName string, currency string) {
 	doc, resp, err := jsc.List(getBaseURL(), "fund")
 	if err != nil {
@@ -213,6 +225,10 @@ func checkForFund(fundName string, currency string) {
 		fundName, currency)
 }
 
+func checkForNoFund(fundName string) {
+	T.Skip()
+}
+
 func init() {
 	BeforeAll(openServer)
 
@@ -232,16 +248,9 @@ func init() {
 
 	Given(`^that the bookkeeper has added the "(.+?)" fund in "(.+?)" currency$`, addFund)
 
-	Given(`^that the bookkeeper has added the following funds$`, func(table [][]string) {
-		T.Skip() // pending
-	})
+	Given(`^that the bookkeeper has added the following funds$`, addFunds)
 
-	When(`^the bookkeeper deletes the "(.+?)" fund$`, func(s1 string) {
-		T.Skip() // pending
-	})
+	When(`^the bookkeeper deletes the "(.+?)" fund$`, deleteFund)
 
-	And(`^there is not a "(.+?)" fund.$`, func(s1 string) {
-		T.Skip() // pending
-	})
-
+	And(`^there is not a "(.+?)" fund.$`, checkForNoFund)
 }
