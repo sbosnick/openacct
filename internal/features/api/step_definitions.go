@@ -58,6 +58,31 @@ func getDsn() string {
 	return "/openacct"
 }
 
+func getList(resourceType string) *jsh.Document {
+	doc, resp, err := jsc.List(getBaseURL(), resourceType)
+	if err != nil {
+		T.Errorf(err.Error())
+		return nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		T.Errorf("Unexpected status code in the response: %s", resp.Status)
+		return nil
+	}
+
+	if doc == nil {
+		T.Errorf("No jsh document returned.")
+		return nil
+	}
+
+	if doc.HasErrors() {
+		T.Errorf("The returned jsh document had the following errors %s", doc.Error())
+		return nil
+	}
+
+	return doc
+}
+
 func openServer() {
 	handler, err := openacctapi.BuildApiHandler(getDsn())
 	if err != nil {
@@ -119,24 +144,8 @@ func doNothing() {
 }
 
 func checkFundCount(count int) {
-	doc, resp, err := jsc.List(getBaseURL(), "fund")
-	if err != nil {
-		T.Errorf(err.Error())
-		return
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		T.Errorf("Unexpected status code in the response: %s", resp.Status)
-		return
-	}
-
+	doc := getList("fund")
 	if doc == nil {
-		T.Errorf("No jsh document returned.")
-		return
-	}
-
-	if doc.HasErrors() {
-		T.Errorf("The returned jsh document had the following errors %s", doc.Error())
 		return
 	}
 
@@ -180,7 +189,7 @@ func addFunds(fundTable gherkin.TabularData) {
 	funds := fundTable.ToMap()
 	for i := 0; i < funds.NumRows(); i++ {
 		addFund(funds["fundname"][i], funds["currency"][i])
-       }
+	}
 }
 
 func deleteFund(fundName string) {
@@ -188,19 +197,8 @@ func deleteFund(fundName string) {
 }
 
 func checkForFund(fundName string, currency string) {
-	doc, resp, err := jsc.List(getBaseURL(), "fund")
-	if err != nil {
-		T.Errorf(err.Error())
-		return
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		T.Errorf("Unexpected status code in the response: %s", resp.Status)
-		return
-	}
-
-	if doc.HasErrors() {
-		T.Errorf("Returned document has errors: %s", doc.Error())
+	doc := getList("fund")
+	if doc == nil {
 		return
 	}
 
