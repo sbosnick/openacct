@@ -20,14 +20,13 @@ Feature: Create, List and Delete Funds
         Then the list of funds has 1 entry
         And there is a "General" fund demonicated in "CAD" currency.
 
-    @wip
     Scenario: Bookkeeper adds a second fund
         Given that the bookkeeper has added the "General" fund in "CAD" currency
         When the bookkeeper adds the "USGeneral" fund in "USD" currency
         Then the list of funds has 2 entries
         And there is a "USGeneral" fund demonicated in "USD" currency.
 
-    @ignore
+    @wip
     Scenario: Bookkeeper deletes one of two funds
         Given that the bookkeeper has added the following funds
             | fundname  | currency  |
