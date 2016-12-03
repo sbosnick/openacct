@@ -193,7 +193,47 @@ func addFunds(fundTable gherkin.TabularData) {
 }
 
 func deleteFund(fundName string) {
-	T.Skip()
+	doc := getList("fund")
+	if doc == nil {
+		return
+	}
+
+	if !doc.HasData() {
+		T.Errorf("The list of funds is empty.")
+		return
+	}
+
+	var id string
+
+	for _, object := range doc.Data {
+		attributes := make(map[string]string)
+		jsherr := object.Unmarshal("fund", &attributes)
+		if jsherr != nil {
+			T.Errorf(jsherr.Error())
+			return
+		}
+
+		if attributes["name"] == fundName {
+			id = object.ID
+		}
+	}
+
+	if id == "" {
+		T.Errorf("No fund named %s was found in the list of funds.", fundName)
+		return
+	}
+
+	resp, err := jsc.Delete(getBaseURL(), "fund", id)
+	if err != nil {
+		T.Errorf(err.Error())
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		T.Errorf("Expected a status code of StatusOK but instead got a StatusCode of %s.",
+			http.StatusText(resp.StatusCode))
+		return
+	}
 }
 
 func checkForFund(fundName string, currency string) {
@@ -212,6 +252,7 @@ func checkForFund(fundName string, currency string) {
 		jsherr := object.Unmarshal("fund", &attributes)
 		if jsherr != nil {
 			T.Errorf(jsherr.Error())
+			return
 		}
 
 		if attributes["name"] == fundName && attributes["currency"] == currency {
@@ -224,7 +265,29 @@ func checkForFund(fundName string, currency string) {
 }
 
 func checkForNoFund(fundName string) {
-	T.Skip()
+	doc := getList("fund")
+	if doc == nil {
+		return
+	}
+
+	if !doc.HasData() {
+		T.Errorf("Returned document has no data.")
+		return
+	}
+
+	for _, object := range doc.Data {
+		var attributes = make(map[string]string)
+		jsherr := object.Unmarshal("fund", &attributes)
+		if jsherr != nil {
+			T.Errorf(jsherr.Error())
+			return
+		}
+
+		if attributes["name"] == fundName {
+			T.Errorf("The list of funds unexpectedly included one named %s.", fundName)
+			return
+		}
+	}
 }
 
 func init() {
